@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoriDSM</title>
+    <style>
+        @font-face {
+            font-family: 'Pretendard-Regular';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Pretendard-Regular';
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+
+        .welcome {
+            display: flex;
+
+        }
+
+        .class-selector {
+            display: flex;
+            padding: 20px;
+            flex : 1;
+            align-items: center;
+            justify-content: right;
+        }
+
+        .container {
+            padding: 0px 20px 20px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            padding: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            margin: 0 auto;
+            background-color: rgb(24, 24, 24);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            display: flex;
+            gap: 20px;
+        }
+
+        .box {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            height: 700px;
+        }
+
+        .settings {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item {
+            height: 24%;
+        }
+
+        .left-column {
+            flex: 1.2;
+        }
+
+        .right-column {
+            flex: 1;
+        }
+
+        .greeting {
+            font-size: 30px;
+            margin-bottom: 30px;
+        }
+
+        .navigation {
+            justify-content: center;
+            width: 200px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #aaaaaa;
+            padding: 10px;
+            border-radius: 20px;
+            flex-direction: column;
+        }
+
+        .navigation #classInfo {
+            font-size: 40px;
+        }
+
+        .vocab-list {
+            margin-bottom: 10px;
+        }
+
+        .vocab-item {
+            background-color: #f8f8f8;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        .vocab-item #main {
+            text-align: center;
+        }
+
+        .vocab-item #sub {
+            text-align: center;
+            color: rgb(63, 63, 63);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .quick-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .quick-action {
+            flex-basis: 20%;
+            text-align: center;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+
+            .left-column,
+            .right-column {
+                width: 100%;
+            }
+        }
+
+        footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        footer img {
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bar">
+        <header class="header">
+            <img src="./assets/logo.svg" class="logo"></img>
+            <h1>MemoriDSM</h1>
+            
+        </header>
+    </div>
+
+    <div class="container">
+        <div class="welcome">
+            <p class="greeting">오늘도 반가워요, <span>UserName</span>님<br>좋은 하루 되세요!</p>
+            <div class="class-selector">
+                <div class="navigation">
+                    <span id="classInfo"><span id="classID">1-4</span></span>
+                    <div>
+                        <span>반을 전환하려면 누르세요</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <div class="box">
+                    <h2>9/4 오늘의 암기장</h2>
+                    <p>문장팩 - day 6</p>
+                    <div class="vocab-list">
+                        <div class="vocab-item">
+                            <p id="main">It's raining cats N dogs</p>
+                            <p id="sub">비가 개만이 오고 있어</p>
+                        </div>
+                        <div class="vocab-item">
+                            <p id="main">It's raining cats N dogs</p>
+                            <p id="sub">비가 개만이 오고 있어</p>
+                        </div>
+                        <div class="vocab-item">
+                            <p id="main">It's raining cats N dogs</p>
+                            <p id="sub">비가 개만이 오고 있어</p>
+                        </div>
+                        <div class="vocab-item">
+                            <p id="main">It's raining cats N dogs</p>
+                            <p id="sub">비가 개만이 오고 있어</p>
+                        </div>
+                        <div class="vocab-item">
+                            <p id="main">It's raining cats N dogs</p>
+                            <p id="sub">비가 개만이 오고 있어</p>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="button">저번 단어</button>
+                        <button class="button">다음 단어</button>
+                        <button class="button button-primary">전체화면</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="box settings">
+                    <div class="item">
+                        <h2>빠른 바로가기</h2>
+                        <div class="quick-actions">
+                            <div class="quick-action" style="background-color: #ffca9f;">넘김<br>설정</div>
+                            <div class="quick-action" style="background-color: #9fc5ff;">암기장<br>설정</div>
+                            <div class="quick-action" style="background-color: #ff9ffa;">반<br>수정</div>
+                            <div class="quick-action" style="background-color: #ff9f9f;">일반<br>설정</div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <h2>공유 링크</h2>
+                        <div style="background-color: #e0e0e0; padding: 10px; border-radius: 5px;">
+                            https://링크링크링크
+                        </div>
+                    </div>
+                    <div class="item">
+                        <h2>암기장 공개여부</h2>
+                        <div class="button-group">
+                            <button class="button button-primary" style="flex-grow: 1;">공개하기</button>
+                            <button class="button" style="flex-grow: 1;">비공개하기</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        HOSTED BY
+        <img src="https://nanu.cc/NANU_Brand_Logo/NANU_CLOUD_MAIN.svg">
+        </div>
+</body>
+
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoriDSM - 반 수정</title>
+    <style>
+        @font-face {
+            font-family: 'Pretendard-Regular';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Pretendard-Regular';
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .header {
+            padding: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            margin: 0 auto;
+            background-color: rgb(24, 24, 24);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .left-column,
+        .right-column {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-column {
+            flex: 1;
+        }
+
+        .right-column {
+            flex: 2;
+        }
+
+        .add-class-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .class-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .class-item {
+            background-color: #e0e0e0;
+            margin-bottom: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .class-item.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .settings-title {
+            margin-top: 0;
+        }
+
+        .setting-row {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .setting-input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .weekday-selector {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .weekday {
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .weekday.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <img src="./assets/logo.svg" class="logo"></img>
+        <h1>MemoriDSM</h1>
+    </header>
+
+    <div class="container">
+        <div class="left-column">
+            <h2>반 수정</h2>
+            <button class="add-class-button">반 추가하기</button>
+            <ul class="class-list">
+                <li class="class-item active">1반</li>
+                <li class="class-item">2반</li>
+                <li class="class-item">3반</li>
+            </ul>
+        </div>
+
+        <div class="right-column">
+            <h2 class="settings-title">1반 설정</h2>
+            <div class="setting-row">
+                <label class="setting-label">시험당 암기목록 갯수</label>
+                <input type="number" class="setting-input" value="8">
+            </div>
+            <div class="setting-row">
+                <label class="setting-label">단어장 넘김 날짜 선택</label>
+                <div class="weekday-selector">
+                    <div class="weekday active">월</div>
+                    <div class="weekday">화</div>
+                    <div class="weekday active">수</div>
+                    <div class="weekday">목</div>
+                    <div class="weekday">금</div>
+                </div>
+                <p>선택한 요일 4:30 이후에 새 암기 목록을 넘깁니다</p>
+            </div>
+            <div class="setting-row">
+                <label class="setting-label">단어장 설정</label>
+                <option id="vocaoptions">
+                </option>
+            </div>
+            <div class="action-buttons">
+                <button class="action-button save-button">저장하기</button>
+                <button class="action-button delete-button">반 삭제하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 요일 선택 토글
+        document.querySelectorAll('.weekday').forEach(day => {
+            day.addEventListener('click', function () {
+                this.classList.toggle('active');
+            });
+        });
+
+        // 반 선택 기능
+        document.querySelectorAll('.class-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.class-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelector('.settings-title').textContent = this.textContent + ' 설정';
+            });
+        });
+
+        // 반 추가 기능 (간단한 구현)
+        document.querySelector('.add-class-button').addEventListener('click', function () {
+            const classList = document.querySelector('.class-list');
+            const newClass = document.createElement('li');
+            newClass.textContent = `${classList.children.length + 1}반`;
+            newClass.className = 'class-item';
+            classList.appendChild(newClass);
+        });
+    </script>
+</body>
+
+</html>

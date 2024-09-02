@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoriDSM - 암기장 수정</title>
+    <style>
+        @font-face {
+            font-family: 'Pretendard-Regular';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Pretendard-Regular';
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+        }
+
+        .header {
+            padding: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: rgb(24, 24, 24);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .left-column,
+        .right-column {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-column {
+            flex: 1;
+        }
+
+        .right-column {
+            flex: 2;
+        }
+
+        .vocabulary-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .vocabulary-item {
+            background-color: #e0e0e0;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .vocabulary-item.selected {
+            background-color: #ccc;
+        }
+
+        .delete-word {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 5px;
+        }
+
+        .vocabulary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #333;
+            color: white;
+        }
+
+        .vocabulary-table th,
+        .vocabulary-table td {
+            border: 1px solid #555;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .vocabulary-table th {
+            background-color: #222;
+        }
+
+        .add-row,
+        .add-vocabulary,
+        .paste-data {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <img src="./assets/logo.svg" class="logo"></img>
+        <h1>MemoriDSM</h1>
+    </header>
+    <div class="container">
+        <div class="left-column">
+            <h2>암기장 수정</h2>
+            <button class="add-vocabulary">암기장 추가</button>
+            <ul class="vocabulary-list">
+                <!-- Example memory books; can be replaced with dynamic data -->
+            </ul>
+        </div>
+
+        <div class="right-column">
+            <h2>암기장 내용</h2>
+            <button class="paste-data">붙여넣기</button>
+            <table class="vocabulary-table">
+                <thead>
+                    <tr>
+                        <th>단어/문장 명</th>
+                        <th>뜻 명</th>
+                        <th>액션</th>
+                    </tr>
+                </thead>
+                <tbody id="vocabulary-body">
+                    <!-- Example rows; will be dynamically updated -->
+                </tbody>
+            </table>
+            <button class="add-row">+</button>
+            <div class="action-buttons">
+                <button class="action-button save-button">저장하기</button>
+                <button class="action-button delete-button">삭제하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:4000/api/vocas';
+let currentVocabularyBook = null;
+let localVocabularyData = [];
+
+// Helper function to make API requests
+async function apiRequest(url, options = {}) {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'An error occurred');
+    }
+    return response.json();
+}
+
+// Load all vocabulary books
+async function loadVocabularyBooks() {
+    try {
+        const vocabularies = await apiRequest(API_BASE_URL);
+        const vocabularyList = document.querySelector('.vocabulary-list');
+        vocabularyList.innerHTML = '';
+
+        const uniqueBooks = [...new Set(vocabularies.map(v => v.zps))];
+        uniqueBooks.forEach(book => {
+            const listItem = document.createElement('li');
+            listItem.className = 'vocabulary-item';
+            listItem.textContent = book;
+            listItem.addEventListener('click', () => loadVocabulary(book));
+            vocabularyList.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error('Error loading vocabulary books:', error);
+        alert('Failed to load vocabulary books.');
+    }
+}
+
+// Load vocabulary for a selected book
+async function loadVocabulary(zps) {
+    try {
+        currentVocabularyBook = zps;
+        localVocabularyData = await apiRequest(`${API_BASE_URL}/${encodeURIComponent(zps)}`);
+
+        const vocabularyBody = document.getElementById('vocabulary-body');
+        vocabularyBody.innerHTML = '';
+
+        localVocabularyData.forEach(voca => {
+            const row = createVocabularyRow(voca);
+            vocabularyBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.vocabulary-item').forEach(item => {
+            item.classList.toggle('selected', item.textContent === zps);
+        });
+    } catch (error) {
+        console.error('Error loading vocabulary:', error);
+        alert('Failed to load vocabulary.');
+    }
+}
+
+// Create a table row for a vocabulary item
+function createVocabularyRow(voca) {
+    const row = document.createElement('tr');
+    row.dataset.id = voca.sequence_number;
+
+    row.innerHTML = `
+        <td>${voca.word_name}</td>
+        <td>${voca.word_meaning}</td>
+        <td><button class="delete-word">Delete</button></td>
+    `;
+
+    row.querySelector('.delete-word').addEventListener('click', () => {
+        localVocabularyData = localVocabularyData.filter(item => item.sequence_number !== voca.sequence_number);
+        row.remove();
+    });
+
+    return row;
+}
+
+// Event handler for adding a new ZPS (vocabulary book)
+document.querySelector('.add-vocabulary').addEventListener('click', () => {
+    const newZPS = prompt('Enter the name for the new vocabulary book:');
+    if (!newZPS) return;
+
+    // Create a new book with a unique name
+    currentVocabularyBook = newZPS;
+    localVocabularyData = [];
+    document.getElementById('vocabulary-body').innerHTML = '';
+    document.querySelectorAll('.vocabulary-item').forEach(item => item.classList.remove('selected'));
+
+    const listItem = document.createElement('li');
+    listItem.className = 'vocabulary-item selected';
+    listItem.textContent = newZPS;
+    listItem.addEventListener('click', () => loadVocabulary(newZPS));
+    document.querySelector('.vocabulary-list').appendChild(listItem);
+});
+
+// Event handler for adding a new vocabulary item (word)
+document.querySelector('.add-row').addEventListener('click', () => {
+    if (!currentVocabularyBook) {
+        alert('Please select or create a vocabulary book first.');
+        return;
+    }
+
+    const wordName = prompt('Word/Sentence Name:');
+    const wordMeaning = prompt('Meaning:');
+    if (!wordName || !wordMeaning) return;
+
+    const newVoca = {
+        word_name: wordName,
+        word_meaning: wordMeaning,
+        zps: currentVocabularyBook
+    };
+    localVocabularyData.push(newVoca);
+
+    const row = createVocabularyRow(newVoca);
+    document.getElementById('vocabulary-body').appendChild(row);
+});
+
+// Event handler for saving changes to the server
+document.querySelector('.save-button').addEventListener('click', async () => {
+    if (!currentVocabularyBook) {
+        alert('Please select or create a vocabulary book first.');
+        return;
+    }
+
+    try {
+        // Fetch all current words for the selected ZPS
+        const existingWords = await apiRequest(`${API_BASE_URL}/${encodeURIComponent(currentVocabularyBook)}`);
+
+        // Delete all existing words
+        for (const word of existingWords) {
+            await apiRequest(`${API_BASE_URL}/${word.sequence_number}`, { method: 'DELETE' });
+        }
+
+        // Add all words from localVocabularyData to the server
+        for (const word of localVocabularyData) {
+            await apiRequest(API_BASE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(word)
+            });
+        }
+
+        alert('Changes saved successfully.');
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert('Failed to save changes.');
+    }
+});
+
+// Event handler for deleting the selected vocabulary book
+document.querySelector('.delete-button').addEventListener('click', async () => {
+    if (!currentVocabularyBook) {
+        alert('Please select a vocabulary book first.');
+        return;
+    }
+
+    if (confirm('Are you sure you want to delete this book and all its vocabulary?')) {
+        try {
+            // Fetch all words for the selected ZPS
+            const existingWords = await apiRequest(`${API_BASE_URL}/${encodeURIComponent(currentVocabularyBook)}`);
+
+            // Delete all words one by one
+            for (const word of existingWords) {
+                await apiRequest(`${API_BASE_URL}/${word.sequence_number}`, { method: 'DELETE' });
+            }
+
+            alert('Vocabulary book and items deleted.');
+            currentVocabularyBook = null;
+            localVocabularyData = [];
+            loadVocabularyBooks(); // Reload the vocabulary book list
+        } catch (error) {
+            console.error('Error deleting vocabulary book:', error);
+            alert('Failed to delete vocabulary book.');
+        }
+    }
+});
+
+// Initial data load
+loadVocabularyBooks();
+
+    </script>
+</body>
+
+</html>
