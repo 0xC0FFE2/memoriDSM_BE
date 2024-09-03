@@ -20,10 +20,9 @@ export const getZps = async (req: Request, res: Response) => {
 };
 
 export const getVoca = async (req: Request, res: Response) => {
-    const id = req.params.id;
-
+    const { id } = req.params; // id 추출
     try {
-        const voca = await vocasRepository.findOneBy({ voca_id });
+        const voca = await vocasRepository.findBy({ zps: id }); // 수정된 부분
 
         if (!voca) {
             res.status(404).json({ message: "Vocabulary not found" });
@@ -65,10 +64,10 @@ export const createVoca = async (req: Request, res: Response) => {
 
 export const updateVoca = async (req: Request, res: Response) => {
     const { word_name, word_meaning, zps } = req.body as UpdateVocasDto;
-    const id = req.params.id;
+    const { id } = req.params; // id 추출
 
     try {
-        const voca = await vocasRepository.findOneBy({ id });
+        const voca = await vocasRepository.findOneBy({ voca_id: id }); // 수정된 부분
 
         if (!voca) {
             return res.status(404).json({ message: 'Vocabulary not found' });
@@ -85,25 +84,68 @@ export const updateVoca = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error updating vocabulary' });
     }
 };
-
 export const deleteVoca = async (req: Request, res: Response) => {
     const id = req.params.id;
 
     try {
-        const voca = await vocasRepository.findOneBy({ voca_id });
+        // 삭제할 단어 찾기
+        const vocaToDelete = await vocasRepository.findOneBy({ voca_id: id });
 
-        if (!voca) {
-            res.status(404).json({ message: "Vocabulary not found" });
-            return;
+        if (!vocaToDelete) {
+            return res.status(404).json({ message: "Vocabulary not found" });
         }
 
-        await vocasRepository.remove(voca);
+        // 동일한 zps에 속한 단어들을 가져옵니다.
+        const vocasInSameZps = await vocasRepository.find({
+            where: { zps: vocaToDelete.zps },
+            order: { sequence_number: "ASC" }
+        });
+
+        // 삭제된 단어를 제외하고 번호를 다시 매깁니다.
+        const filteredVocas = vocasInSameZps.filter(voca => voca.voca_id !== vocaToDelete.voca_id);
+
+        // 번호를 다시 1부터 설정합니다.
+        for (let i = 0; i < filteredVocas.length; i++) {
+            filteredVocas[i].sequence_number = i + 1; // 새 번호 할당
+        }
+
+        // 삭제 수행
+        await vocasRepository.remove(vocaToDelete);
+
+        // 업데이트된 번호를 저장합니다.
+        await vocasRepository.save(filteredVocas);
+
         res.status(204).send();
     } catch (error) {
         console.error('Error in deleteVoca:', error);
         res.status(500).json({ message: 'Error deleting vocabulary' });
     }
 };
+
+
+export const deleteVocaBook = async (req: Request, res: Response) => {
+    const { zps } = req.params;
+
+    try {
+        const vocasInSameZps = await vocasRepository.find({
+            where: { zps },
+            order: { sequence_number: "ASC" }
+        });
+
+        if (vocasInSameZps.length === 0) {
+            return res.status(404).json({ message: "Vocabulary book not found or already empty" });
+        }
+
+        // 가져온 모든 단어를 삭제합니다.
+        await vocasRepository.remove(vocasInSameZps);
+
+        res.status(204).send();
+    } catch (error) {
+        console.error('Error in deleteVocaBook:', error);
+        res.status(500).json({ message: 'Error deleting vocabulary book', error });
+    }
+};
+
 
 const getNextSequenceNumber = async (zps: string): Promise<number> => {
     const result = await vocasRepository
@@ -114,23 +156,4 @@ const getNextSequenceNumber = async (zps: string): Promise<number> => {
 
     const maxSequence = result.max ? parseInt(result.max, 10) : 0;
     return maxSequence + 1;
-};
-
-// New function to delete all vocabularies in a specific book
-export const deleteVocaBook = async (req: Request, res: Response) => {
-    const zps = req.params.zps;
-
-    try {
-        const result = await vocasRepository.delete({ zps });
-
-        if (result.affected === 0) {
-            res.status(404).json({ message: "Vocabulary book not found or already empty" });
-            return;
-        }
-
-        res.status(204).send();
-    } catch (error) {
-        console.error('Error in deleteVocaBook:', error);
-        res.status(500).json({ message: 'Error deleting vocabulary book' });
-    }
 };

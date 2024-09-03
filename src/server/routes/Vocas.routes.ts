@@ -8,6 +8,6 @@ router.get('/:id', getVoca);
 router.post('/', createVoca);
 router.put('/:id', updateVoca);
 router.delete('/:id', deleteVoca);
-router.delete('/zps/:id', deleteVocaBook);
+router.delete('/zps/:zps', deleteVocaBook);
 
 export default router;
