@@ -1,5 +1,6 @@
-//class entity
-import { Entity, PrimaryColumn, Column } from "typeorm";
+// Class.ts
+import { Entity, PrimaryColumn, Column, ManyToOne } from "typeorm";
+import { ZPS } from "./ZPS";
 
 @Entity('Class')
 export class Class {
@@ -10,8 +11,11 @@ export class Class {
     change_interval: string;
 
     @Column({ default: 8 })
-    change_amount: string;
+    change_amount: number;
 
     @Column({ default: 0 })
-    last_invt:number;
+    last_invt: number;
+
+    @ManyToOne(() => ZPS, (zps) => zps.classes)
+    selected_zps: ZPS;
 }

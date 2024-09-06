@@ -189,6 +189,9 @@
             <button class="toggle-form-button" onclick="toggleForm()">반 생성하기</button>
             <div class="add-class-form">
                 <input type="text" id="classNameInput" placeholder="반 이름" required>
+                <input type="text" id="selectedZpsInput" placeholder="ZPS 선택" required>
+                <input type="text" id="changeIntervalInput" placeholder="변경 간격" required>
+                <input type="number" id="changeAmountInput" placeholder="변경 양" required>
                 <button class="add-class-button" onclick="addClass()">추가</button>
             </div>
         </div>
@@ -253,14 +256,20 @@
         // Add a new class
         async function addClass() {
             const className = document.getElementById('classNameInput').value;
+            const selectedZps = document.getElementById('selectedZpsInput').value;
+            const changeInterval = document.getElementById('changeIntervalInput').value;
+            const changeAmount = document.getElementById('changeAmountInput').value;
 
-            if (!className) {
-                alert('반 이름을 입력해 주세요.');
+            if (!className || !selectedZps || !changeInterval || changeAmount === '') {
+                alert('모든 필드를 입력해 주세요.');
                 return;
             }
 
             const newClass = {
-                class_name: className
+                class_name: className,
+                selected_zps: selectedZps,
+                change_interval: changeInterval,
+                change_amount: parseInt(changeAmount, 10) // Ensure it’s a number
             };
 
             try {
@@ -286,6 +295,7 @@
                 alert('Failed to create class. Check the console for more details.');
             }
         }
+
 
         // Fetch classes on page load
         window.onload = fetchClasses;

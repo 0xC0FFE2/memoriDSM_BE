@@ -59,6 +59,10 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
+        .right-column {
+            display: none;
+        }
+
         .left-column {
             flex: 1;
         }
@@ -116,8 +120,10 @@
         }
 
         .add-row,
+        .add-voca-row,
         .add-vocabulary,
-        .paste-data {
+        .paste-data,
+        .add-zps {
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -205,6 +211,7 @@
         const addVocaRowButton = document.querySelector('.add-voca-row');
         const saveButton = document.querySelector('.save-button');
         const deleteButton = document.querySelector('.delete-button');
+        const rightColumn = document.querySelector('.right-column');
 
         // 암기장 목록 가져오기
         async function fetchZps() {
@@ -216,6 +223,41 @@
                 console.error('Error fetching ZPS:', error);
             }
         }
+
+        pasteDataButton.addEventListener('click', async () => {
+            if (!currentZps) {
+                alert('먼저 암기장을 선택해 주세요.');
+                return;
+            }
+
+            const pastedData = prompt('붙여넣기한 데이터를 입력하세요 (JSON 형식)');
+            if (!pastedData) return;
+
+            try {
+                const dataArray = JSON.parse(pastedData);
+
+                if (!Array.isArray(dataArray)) {
+                    throw new Error('잘못된 데이터 형식입니다. JSON 배열 형식이어야 합니다.');
+                }
+
+                for (const [wordName, wordMeaning] of dataArray) {
+                    if (wordName && wordMeaning) {
+                        try {
+                            const newVoca = await createVoca({ word_name: wordName, word_meaning: wordMeaning, zps: currentZps });
+                            const row = createVocabularyRow(newVoca);
+                            vocabularyTable.appendChild(row);
+                        } catch (error) {
+                            console.error('Error adding vocabulary from pasted data:', error);
+                            alert('단어 추가에 실패했습니다.');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing pasted data:', error);
+                alert('붙여넣기 데이터 형식이 잘못되었습니다.');
+            }
+        });
+
 
         // 암기장 목록 표시
         async function displayZpsList() {
@@ -250,6 +292,7 @@
 
         // 단어 목록을 테이블에 표시
         function displayVocabulary(vocabulary) {
+            rightColumn.style.display = 'block';
             vocabularyTable.innerHTML = '';
             vocabulary.forEach(word => {
                 const row = createVocabularyRow(word);
@@ -336,6 +379,7 @@
                 displayZpsList();
                 vocabularyTable.innerHTML = '';
                 currentZps = null;
+                location.reload(true);
             } catch (error) {
                 console.error('Error deleting voca book:', error);
             }
@@ -361,6 +405,8 @@
                     await updateVoca(id, vocaData);
                 }
             }
+            alert('저장되었어요!')
+            location.reload();
             loadVocabulary(currentZps);
         }
 
@@ -368,14 +414,12 @@
         addZpsButton.addEventListener('click', () => {
             const zpsName = prompt('새 암기장 이름을 입력하세요:');
             if (zpsName) {
+                rightColumn.style.display = 'block';
+                alert("임시저장 상태입니다. 저장을 눌러야 단어장이 등록됩니다.")
                 currentZps = zpsName;
                 vocabularyTable.innerHTML = '';
                 displayZpsList();
             }
-        });
-
-        pasteDataButton.addEventListener('click', () => {
-            // 구현 필요: 클립보드에서 데이터를 가져와 처리하는 로직
         });
 
         addVocaRowButton.addEventListener('click', addNewVocaRow);
