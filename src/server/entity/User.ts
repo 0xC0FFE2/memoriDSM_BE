@@ -10,7 +10,4 @@ export class User {
 
     @Column()
     userName: string;
-
-    @Column()
-    userProfileUrl: string;
 }

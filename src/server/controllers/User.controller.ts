@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { AppDataSource } from '../config/datasource'; // Adjust the path to your DataSource
-import { User } from '../entity/User'; // Adjust the path to your entity
+import { AppDataSource } from '../config/datasource'; 
+import { User } from '../entity/User'; 
 import { CreateUserDto, UpdateUserDto } from '../dto/User.dto';
 
-// Get the repository from the data source
 const userRepository = AppDataSource.getRepository(User);
 
 export const getUsers = async (req: Request, res: Response) => {
@@ -18,7 +17,7 @@ export const getUsers = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
     try {
         const user = await userRepository.findOneBy({
-            userId: req.params.id // Handle id as string
+            userId: req.params.id,
         });
         if (!user) {
             res.status(404).json({ message: "User not found" });
@@ -43,7 +42,7 @@ export const createUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const user = await userRepository.findOneBy({
-            userId: req.params.id // Handle id as string
+            userId: req.params.id,
         });
         if (!user) {
             res.status(404).json({ message: "User not found" });
