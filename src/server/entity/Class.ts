@@ -16,6 +16,9 @@ export class Class {
     @Column({ default: 0 })
     last_invt: number;
 
+    @Column({ default: 1 })
+    is_public : number;
+
     @ManyToOne(() => ZPS, (zps) => zps.classes)
     selected_zps: ZPS;
 }

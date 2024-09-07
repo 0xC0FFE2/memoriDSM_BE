@@ -3,7 +3,7 @@ export class CreateClassDto {
     change_interval?: string;
     change_amount?: number;
     last_invt?: number;
-    selected_zps_id: string;
+    selected_zps_id?: string;
 }
 
 export class UpdateClassDto {
@@ -11,4 +11,5 @@ export class UpdateClassDto {
     change_amount?: number;
     last_invt?: number;
     selected_zps_id?: string;
+    is_public?:number;
 }

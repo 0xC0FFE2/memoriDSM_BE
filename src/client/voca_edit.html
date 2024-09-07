@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MemoriDSM - 암기장 수정</title>
+    <link rel="icon" href="./assets/favicon.png" type="image/x-icon">
     <style>
         @font-face {
             font-family: 'Pretendard-Regular';
@@ -196,15 +197,12 @@
     </div>
 
     <script>
-        // API Endpoint Base URL
         const API_BASE_URL = 'http://localhost:4000/api';
         const ZPS_ENDPOINT = `${API_BASE_URL}/zps`;
         const VOCAS_ENDPOINT = `${API_BASE_URL}/vocas`;
 
-        // 현재 선택된 암기장 ID
         let currentZps = null;
 
-        // DOM 요소들
         const vocabularyList = document.querySelector('.vocabulary-list');
         const vocabularyTable = document.querySelector('.vocabulary-table tbody');
         const addZpsButton = document.querySelector('.add-zps');
@@ -213,8 +211,6 @@
         const saveButton = document.querySelector('.save-button');
         const deleteButton = document.querySelector('.delete-button');
         const rightColumn = document.querySelector('.right-column');
-
-        // 암기장 목록 가져오기
         async function fetchZpsList() {
             try {
                 const response = await fetch(ZPS_ENDPOINT);
@@ -298,11 +294,16 @@
 
         // 암기장 삭제 요청
         async function deleteZps(zpsId) {
+            userConfirm = confirm('정말로 단어장을 삭제하시겠습니까?')
+            if (!userConfirm || userConfirm == NaN) {
+                return false;
+            }
             try {
                 const response = await fetch(`${ZPS_ENDPOINT}/${zpsId}`, { method: 'DELETE' });
                 if (response.ok) {
                     document.querySelector(`.vocabulary-item[data-id="${zpsId}"]`).remove();
                 } else {
+                    alert('암기장을 삭제할 수 없습니다. 이 암기장을 사용하는 반(Class)가 있을 수 있습니다.')
                     console.error('암기장 삭제에 실패했습니다.');
                 }
             } catch (error) {
@@ -310,26 +311,59 @@
             }
         }
 
-        // 붙여넣기 기능
-        function pasteData() {
-            const pastedData = prompt('단어와 뜻을 입력하세요 (형식: 단어,뜻):');
-            if (pastedData) {
-                const rows = pastedData.split('\n');
-                rows.forEach(row => {
-                    const [word, meaning] = row.split(',');
-                    if (word && meaning) {
-                        const newItem = {
-                            voca_id: Date.now().toString(),
-                            word_name: word.trim(),
-                            word_meaning: meaning.trim(),
-                            zps_id: currentZps
-                        };
-                        const newRow = createVocabularyRow(newItem);
-                        vocabularyTable.appendChild(newRow);
+        async function pasteData() {
+            const pastedData = prompt('단어와 뜻을 입력하세요 (형식: ["단어", "뜻"], ["단어", "뜻"] ...):');
+
+            if (pastedData && currentZps) {
+                try {
+                    const dataArray = JSON.parse(pastedData);
+
+                    if (Array.isArray(dataArray)) {
+                        const newItems = [];
+                        for (const [word, meaning] of dataArray) {
+                            if (word && meaning) {
+                                const newItem = {
+                                    word_name: word.trim(),
+                                    word_meaning: meaning.trim(),
+                                    zps_id: currentZps
+                                };
+                                newItems.push(newItem);
+                            }
+                        }
+
+                        // Send new items to the server
+                        for (const item of newItems) {
+                            try {
+                                const response = await fetch(VOCAS_ENDPOINT, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(item),
+                                });
+                                if (!response.ok) {
+                                    throw new Error('서버 응답 오류');
+                                }
+                                const savedItem = await response.json();
+                                const newRow = createVocabularyRow(savedItem);
+                                vocabularyTable.appendChild(newRow);
+                            } catch (error) {
+                                console.error('항목 저장 중 오류:', error);
+                            }
+                        }
+
+                        alert('새로운 항목이 추가되었습니다.');
+                    } else {
+                        alert('잘못된 형식입니다. 배열 형식으로 입력해주세요.');
                     }
-                });
+                } catch (error) {
+                    console.error('입력 파싱 오류:', error);
+                    alert('입력 형식이 올바르지 않습니다. 배열 형식으로 입력하세요.');
+                }
+            } else if (!currentZps) {
+                alert('먼저 암기장을 선택해주세요.');
             }
+            location.reload();
         }
+
 
         // 암기장 추가 요청
         addZpsButton.addEventListener('click', async () => {
@@ -347,9 +381,10 @@
                     console.error('새 암기장 생성 오류:', error);
                 }
             }
-        });
-        // 단어 목록 저장 요청
-        // 단어 목록 저장 요청
+            location.reload();
+        });// 단어 목록 저장 요청
+
+
         async function saveVocabularyChanges() {
             if (!currentZps) {
                 alert('암기장이 선택되지 않았습니다.');
@@ -357,58 +392,49 @@
             }
 
             try {
-                // 1. Fetch the current items from the server
                 const response = await fetch(`${VOCAS_ENDPOINT}/${currentZps}`);
                 const serverVocabularyItems = await response.json();
-
-                // 2. Get current items from the DOM
                 const rows = Array.from(vocabularyTable.querySelectorAll('tr'));
-                const userVocabularyItems = rows.map(row => ({
+                const userVocabularyItems = rows.map((row, index) => ({
                     voca_id: row.dataset.id,
                     word_name: row.cells[0].textContent.trim(),
                     word_meaning: row.cells[1].textContent.trim(),
+                    zps_id: currentZps,
+                    sequence_number: index + 1 // Assign sequence number based on order
                 }));
 
-                // 3. Prepare requests for modified and new items
-                const updatePromises = [];
-                const createPromises = [];
-
-                userVocabularyItems.forEach(userItem => {
+                for (const userItem of userVocabularyItems) {
                     const matchingServerItem = serverVocabularyItems.find(serverItem => serverItem.voca_id === userItem.voca_id);
 
                     if (matchingServerItem) {
-                        // If item exists on server, check if it has been modified
                         if (
                             matchingServerItem.word_name !== userItem.word_name ||
-                            matchingServerItem.word_meaning !== userItem.word_meaning
+                            matchingServerItem.word_meaning !== userItem.word_meaning ||
+                            matchingServerItem.sequence_number !== userItem.sequence_number
                         ) {
-                            // Modified item - use PUT
-                            updatePromises.push(fetch(`${VOCAS_ENDPOINT}/${userItem.voca_id}`, {
+                            await fetch(`${VOCAS_ENDPOINT}/${userItem.voca_id}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(userItem),
-                            }));
+                            });
                         }
                     } else {
-                        // New item - use POST
-                        createPromises.push(fetch(VOCAS_ENDPOINT, {
+                        await fetch(VOCAS_ENDPOINT, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(userItem),
-                        }));
+                        });
                     }
-                });
-
-                // 4. Send all requests in parallel
-                await Promise.all([...createPromises, ...updatePromises]);
+                }
 
                 alert('변경 사항이 저장되었습니다!');
-                loadVocabulary(currentZps); // Refresh vocabulary list
+                loadVocabulary(currentZps);
             } catch (error) {
                 console.error('변경 사항 저장 오류:', error);
                 alert('변경 사항 저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
             }
         }
+
 
 
         // 붙여넣기 버튼 클릭 이벤트
