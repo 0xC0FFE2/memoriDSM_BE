@@ -1,6 +1,7 @@
 import express from 'express';
 import { AppDataSource } from './config/datasource'; // Adjust import path as necessary
 import userRouter from './routes/user.router';
+import zpsRouter from './routes/zps.router';
 import classRouter from './routes/class.router';
 import vocasRouter from './routes/vocas.router';
 import publishRouter from './routes/publish-voca.router'
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(urlencoded({ extended: true }))
 
 app.use('/api/users', userRouter);
+app.use('/api/zps', zpsRouter);
 app.use('/api/classes', classRouter);
 app.use('/api/vocas', vocasRouter);
 app.use('/api/readVoca',publishRouter);

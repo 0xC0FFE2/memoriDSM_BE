@@ -16,6 +16,6 @@ export class Vocas {
     @Column()
     word_meaning: string;
 
-    @ManyToOne(() => ZPS, (zps) => zps.vocas)
+    @ManyToOne(() => ZPS, (zps) => zps.vocas,{onDelete:"CASCADE"})
     zps: ZPS;
 }
