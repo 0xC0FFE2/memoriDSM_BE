@@ -7,9 +7,6 @@ export class Class {
     @PrimaryColumn()
     class_name: string;
 
-    @Column({ default: "월,수,금" })
-    change_interval: string;
-
     @Column({ default: 8 })
     change_amount: number;
 
