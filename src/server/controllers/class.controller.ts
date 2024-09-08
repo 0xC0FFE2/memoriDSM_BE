@@ -59,15 +59,24 @@ export const updateClass = async (req: Request, res: Response) => {
             res.status(404).json({ message: "Class not found" });
             return;
         }
-        if (selected_zps_id) {
+
+        let zpsChanged = false;
+        if (selected_zps_id && selected_zps_id !== classItem.selected_zps.zps_id) {
             const zps = await zpsRepository.findOne({ where: { zps_id: selected_zps_id } });
             if (!zps) {
                 res.status(404).json({ message: 'Selected ZPS not found' });
                 return;
             }
             classItem.selected_zps = zps;
+            zpsChanged = true;
         }
+
         classRepository.merge(classItem, updateData);
+
+        if (zpsChanged) {
+            classItem.last_invt = 0;  // ZPS가 변경되면 last_invt를 0으로 초기화
+        }
+
         const updatedClass = await classRepository.save(classItem);
         res.json(updatedClass);
     } catch (error) {
