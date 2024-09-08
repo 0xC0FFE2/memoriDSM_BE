@@ -309,56 +309,57 @@
         document.getElementById('classID').innerText = CLASS;
         document.getElementById('classURL').innerText = CLASS;
 
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                const vocabListContainer = document.querySelector('.vocab-list');
-                vocabListContainer.innerHTML = ''; // 기존 항목 초기화
+        fetch(apiUrl, {
+            headers: {
+                'Auth': token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const vocabListContainer = document.querySelector('.vocab-list');
+            vocabListContainer.innerHTML = ''; // 기존 항목 초기화
 
-                if (data.length > 0) {
-                    const zpsNameElement = document.getElementById('zps-name-element'); // 특정 ID를 가진 요소
+            if (data.length > 0) {
+                const zpsNameElement = document.getElementById('zps-name-element');
 
-                    // 첫 번째와 마지막 sequence_number 가져오기
-                    const firstSequenceNumber = data[0].sequence_number;
-                    const lastSequenceNumber = data[data.length - 1].sequence_number;
-                    const zpsName = data[0].zps.zps_name;
+                const firstSequenceNumber = data[0].sequence_number;
+                const lastSequenceNumber = data[data.length - 1].sequence_number;
+                const zpsName = data[0].zps.zps_name;
 
-                    // zps_name과 sequence_number 범위를 표시
-                    if (zpsNameElement) {
-                        zpsNameElement.textContent = `${zpsName} 단어장, ${firstSequenceNumber} ~ ${lastSequenceNumber}`;
-                    }
+                if (zpsNameElement) {
+                    zpsNameElement.textContent = `${zpsName} 단어장, ${firstSequenceNumber} ~ ${lastSequenceNumber}`;
                 }
+            }
 
-                data.forEach(item => {
-                    const vocabItem = document.createElement('div');
-                    vocabItem.classList.add('vocab-item');
+            data.forEach(item => {
+                const vocabItem = document.createElement('div');
+                vocabItem.classList.add('vocab-item');
 
-                    const mainText = document.createElement('p');
-                    mainText.id = 'main';
-                    mainText.textContent = item.word_name;
+                const mainText = document.createElement('p');
+                mainText.id = 'main';
+                mainText.textContent = item.word_name;
 
-                    const subText = document.createElement('p');
-                    subText.id = 'sub';
-                    subText.textContent = item.word_meaning;
+                const subText = document.createElement('p');
+                subText.id = 'sub';
+                subText.textContent = item.word_meaning;
 
-                    vocabItem.appendChild(mainText);
-                    vocabItem.appendChild(subText);
-                    vocabListContainer.appendChild(vocabItem);
-                });
-            })
-            .catch(error => {
-                alert('단어장이 비공개 상태거나 단어장의 모든 단어를 시험을 봐서 단어를 불러올 수 없어요 (아님 서버 오류)')
+                vocabItem.appendChild(mainText);
+                vocabItem.appendChild(subText);
+                vocabListContainer.appendChild(vocabItem);
             });
+        })
+        .catch(error => {
+            alert('단어장이 비공개 상태거나 단어장의 모든 단어를 시험을 봐서 단어를 불러올 수 없어요 (아님 서버 오류)');
+        });
+
         if (token) {
             try {
-                // JWT를 디코딩하여 페이로드를 가져옵니다.
                 const decodedToken = jwt_decode(token);
-                const userEmail = decodedToken.user_email; // 페이로드에서 user_email을 가져옵니다.
+                const userEmail = decodedToken.user_email;
 
-                // HTML 요소에 사용자 이메일을 설정합니다.
                 const userNameElement = document.getElementById('userName');
                 if (userNameElement) {
-                    userNameElement.textContent = userEmail; // 사용자 이메일을 요소에 설정합니다.
+                    userNameElement.textContent = userEmail;
                 }
             } catch (error) {
                 console.error('Failed to decode JWT:', error);
@@ -373,7 +374,7 @@
     window.onload = async function () {
         const isAuthenticated = await handleSecurityCheck();
         if (isAuthenticated) {
-            fetchVocabularyData()
+            fetchVocabularyData();
             await fetchClassData();
 
             document.getElementById('privacyToggle').addEventListener('change', togglePrivacy);
@@ -404,7 +405,11 @@
 
         const apiUrl = `http://localhost:4000/api/classes/${CLASS}`;
         try {
-            const response = await fetch(apiUrl);
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Auth': token
+                }
+            });
             const data = await response.json();
             currentClassData = data;
             updateUI();
@@ -414,18 +419,22 @@
     }
 
     function updateUI() {
-        // 공개 여부 토글 업데이트
         const privacyToggle = document.getElementById('privacyToggle');
         const privacyStatus = document.getElementById('privacyStatus');
         privacyToggle.checked = currentClassData.is_public === 1;
         privacyStatus.textContent = currentClassData.is_public === 1 ? '단어장은 공개 상태에요' : '단어장은 비공개 상태에요';
-    } 
-    
+    }
+
     async function togglePrivacy() {
         const CLASS = getUrlParams().class;
         const apiUrl = `http://localhost:4000/api/classes/privacy/${CLASS}`;
         try {
-            const response = await fetch(apiUrl, { method: 'POST' });
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Auth': token
+                }
+            });
             const data = await response.json();
             currentClassData = data;
             location.reload();
@@ -438,14 +447,18 @@
         const CLASS = getUrlParams().class;
         const apiUrl = `http://localhost:4000/api/classes/${direction === 'next' ? 'zps_up' : 'zps_down'}/${CLASS}`;
         try {
-            const response = await fetch(apiUrl, { method: 'POST' });
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Auth': token
+                }
+            });
             const data = await response.json();
             currentClassData = data;
-            alert('단어장을 넘겼어요!')
+            alert('단어장을 넘겼어요!');
             location.reload();
         } catch (error) {
             console.error('Error changing word:', error);
         }
     }
-
 </script>
