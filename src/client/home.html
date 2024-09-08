@@ -44,6 +44,7 @@
         }
 
         .header {
+            cursor: pointer;
             padding: 20px;
             color: white;
             display: flex;
@@ -162,6 +163,7 @@
         }
 
         .quick-action {
+            cursor: pointer;
             flex-basis: 20%;
             text-align: center;
             padding: 10px;
@@ -197,7 +199,7 @@
 
 <body>
     <div class="bar">
-        <header class="header">
+        <header class="header" onclick="window.location.href='./start.html'">
             <img src="./assets/logo.svg" class="logo"></img>
             <h1>MemoriDSM</h1>
 
@@ -209,7 +211,7 @@
             <p class="greeting">오늘도 반가워요, <span id="userName">사용자</span>님<br>좋은 하루 되세요!</p>
             <div class="class-selector">
                 <div class="navigation" onclick="window.location.href='./'">
-                    <span id="classInfo"><span id="classID">1-4</span></span>
+                    <span id="classInfo"><span id="classID">NaN</span></span>
                     <div>
                         <span>반을 전환하려면 누르세요</span>
                     </div>
@@ -232,31 +234,39 @@
                     <div class="item">
                         <h2>빠른 바로가기</h2>
                         <div class="quick-actions">
-                            <div class="quick-action" style="background-color: #ffca9f;">단어<br>넘기기</div>
-                            <div class="quick-action" style="background-color: #9fc5ff;">암기장<br>설정</div>
-                            <div class="quick-action" style="background-color: #ff9ffa;">반<br>수정</div>
-                            <div class="quick-action" style="background-color: #ff9f9f;">로그<br>아웃</div>
+                            <div class="quick-action" id="q-nextWord" style="background-color: #ffca9f;">단어<br>넘기기</div>
+                            <div class="quick-action" style="background-color: #9fc5ff;"
+                                onclick="window.location.href='./voca_edit.html'">암기장<br>설정</div>
+                            <div class="quick-action" style="background-color: #ff9ffa;"
+                                onclick="window.location.href='./class_manage.html'">반<br>수정</div>
+                            <div class="quick-action" style="background-color: #ff9f9f;"
+                                onclick="logout()">로그<br>아웃</div>
                         </div>
                     </div>
                     <div class="item">
                         <h2>공유 링크</h2>
                         <div style="background-color: #e0e0e0; padding: 10px; border-radius: 5px;">
-                            https://memori-dsm.ncloud.sbs/myvocas
+                            https://memori-dsm.ncloud.sbs/tds?c=<span id="classURL"></span>
                         </div>
                     </div>
                     <div class="item">
                         <h2>암기장 공개여부</h2>
-                        <div class="button-group" style="gap: 10px;">
-                            <button class="button button-primary" style="flex-grow: 1;"
-                                onclick="alert('아직은 미지원 기능이에요')">공개하기</button>
-                            <button class="button" style="flex-grow: 1;" onclick="alert('아직은 미지원 기능이에요')">비공개하기</button>
+                        <div class="button-group" style="gap: 10px; align-items: center;">
+                            <span id="privacyStatus">NaN</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="privacyToggle">
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
-                    <div class="item"></div>
-                    <h2>단어 넘기기</h2>
-                    <div class="button-group" style="gap: 10px;">
-                        <button class="button" style="flex-grow: 1;background-color: #9fc5ff;">앞으로 넘기기</button>
-                        <button class="button" style="flex-grow: 1;background-color: #ffaa9f;">뒤로 넘기기</button>
+                    <div class="item">
+                        <h2>단어 넘기기</h2>
+                        <div class="button-group" style="gap: 10px;">
+                            <button class="button" style="flex-grow: 1;background-color: #9fc5ff;" id="nextWord">앞으로
+                                넘기기 (+)</button>
+                            <button class="button" style="flex-grow: 1;background-color: #ffaa9f;" id="prevWord">뒤로
+                                넘기기 (-)</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -278,9 +288,7 @@
         if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    // 쿠키에서 JWT를 가져옵니다.
-    const token = getCookie('ACCESS'); // 여기에 쿠키 이름을 넣으세요.
-
+    const token = getCookie('ACCESS');
 
     function getUrlParams() {
         var params = {};
@@ -299,6 +307,7 @@
 
         const apiUrl = `http://localhost:4000/api/readVoca/${CLASS}`;
         document.getElementById('classID').innerText = CLASS;
+        document.getElementById('classURL').innerText = CLASS;
 
         fetch(apiUrl)
             .then(response => response.json())
@@ -338,7 +347,7 @@
                 });
             })
             .catch(error => {
-                console.error('Error fetching data:', error);
+                alert('단어장이 비공개 상태거나 단어장의 모든 단어를 시험을 봐서 단어를 불러올 수 없어요 (아님 서버 오류)')
             });
         if (token) {
             try {
@@ -365,6 +374,78 @@
         const isAuthenticated = await handleSecurityCheck();
         if (isAuthenticated) {
             fetchVocabularyData()
+            await fetchClassData();
+
+            document.getElementById('privacyToggle').addEventListener('change', togglePrivacy);
+            document.getElementById('q-nextWord').addEventListener('click', () => changeWord('next'));
+            document.getElementById('nextWord').addEventListener('click', () => changeWord('next'));
+            document.getElementById('prevWord').addEventListener('click', () => changeWord('prev'));
         }
     };
+
+    function logout() {
+        document.cookie.split(';').forEach(cookie => {
+            const [name] = cookie.split('=');
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        });
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+
+    let currentClassData = null;
+
+    async function fetchClassData() {
+        const CLASS = getUrlParams().class;
+        if (!CLASS) {
+            alert('반 정보가 없습니다. 처음부터 시도하여 주십시오.');
+            location.href = "./";
+            return;
+        }
+
+        const apiUrl = `http://localhost:4000/api/classes/${CLASS}`;
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            currentClassData = data;
+            updateUI();
+        } catch (error) {
+            console.error('Error fetching class data:', error);
+        }
+    }
+
+    function updateUI() {
+        // 공개 여부 토글 업데이트
+        const privacyToggle = document.getElementById('privacyToggle');
+        const privacyStatus = document.getElementById('privacyStatus');
+        privacyToggle.checked = currentClassData.is_public === 1;
+        privacyStatus.textContent = currentClassData.is_public === 1 ? '단어장은 공개 상태에요' : '단어장은 비공개 상태에요';
+    } 
+    
+    async function togglePrivacy() {
+        const CLASS = getUrlParams().class;
+        const apiUrl = `http://localhost:4000/api/classes/privacy/${CLASS}`;
+        try {
+            const response = await fetch(apiUrl, { method: 'POST' });
+            const data = await response.json();
+            currentClassData = data;
+            location.reload();
+        } catch (error) {
+            console.error('Error toggling privacy:', error);
+        }
+    }
+
+    async function changeWord(direction) {
+        const CLASS = getUrlParams().class;
+        const apiUrl = `http://localhost:4000/api/classes/${direction === 'next' ? 'zps_up' : 'zps_down'}/${CLASS}`;
+        try {
+            const response = await fetch(apiUrl, { method: 'POST' });
+            const data = await response.json();
+            currentClassData = data;
+            alert('단어장을 넘겼어요!')
+            location.reload();
+        } catch (error) {
+            console.error('Error changing word:', error);
+        }
+    }
+
 </script>

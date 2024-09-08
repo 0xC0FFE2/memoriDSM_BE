@@ -33,6 +33,7 @@
         }
 
         .header {
+            cursor: pointer;
             padding: 20px;
             color: white;
             display: flex;
@@ -164,7 +165,7 @@
 </head>
 
 <body>
-    <header class="header">
+    <header class="header" onclick="window.location.href='./start.html'">
         <img src="./assets/logo.svg" class="logo">
         <h1>MemoriDSM</h1>
     </header>
@@ -197,13 +198,18 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         const API_BASE_URL = 'http://localhost:4000/api'; // 엔드포인트 기본 URL
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadZPSOptions();
-            loadClasses();
-        });
+        import { handleSecurityCheck } from './assets/security.js';
+
+        window.onload = async function () {
+            const isAuthenticated = await handleSecurityCheck();
+            if (isAuthenticated) {
+                loadZPSOptions();
+                loadClasses();
+            }
+        };
 
         // ZPS 목록 불러오기
         async function loadZPSOptions() {
@@ -281,7 +287,7 @@
             try {
                 await fetch(`${API_BASE_URL}/classes/${className}`, { method: 'DELETE' });
                 alert('반이 삭제되었습니다.');
-                loadClasses(); // 반 목록을 다시 불러오기
+                window.location.href = './start.html'
             } catch (error) {
                 console.error('Error deleting class:', error);
                 alert('반 삭제에 실패했습니다.');

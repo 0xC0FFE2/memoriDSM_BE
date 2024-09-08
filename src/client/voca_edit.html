@@ -33,6 +33,7 @@
         }
 
         .header {
+            cursor: pointer;
             padding: 20px;
             color: white;
             display: flex;
@@ -162,7 +163,7 @@
 </head>
 
 <body>
-    <header class="header">
+    <header class="header" onclick="window.location.href='./start.html'">
         <img src="./assets/logo.svg" class="logo"></img>
         <h1>MemoriDSM</h1>
     </header>
@@ -196,7 +197,7 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         const API_BASE_URL = 'http://localhost:4000/api';
         const ZPS_ENDPOINT = `${API_BASE_URL}/zps`;
         const VOCAS_ENDPOINT = `${API_BASE_URL}/vocas`;
@@ -435,23 +436,27 @@
             }
         }
 
+        import { handleSecurityCheck } from './assets/security.js';
 
+        window.onload = async function () {
+            const isAuthenticated = await handleSecurityCheck();
+            if (isAuthenticated) {
+                // 붙여넣기 버튼 클릭 이벤트
+                pasteDataButton.addEventListener('click', pasteData);
 
-        // 붙여넣기 버튼 클릭 이벤트
-        pasteDataButton.addEventListener('click', pasteData);
+                // 새 단어 추가 버튼 클릭 이벤트
+                addVocaRowButton.addEventListener('click', addNewVocaRow);
 
-        // 새 단어 추가 버튼 클릭 이벤트
-        addVocaRowButton.addEventListener('click', addNewVocaRow);
+                // 삭제 버튼 클릭 이벤트
+                deleteButton.addEventListener('click', () => deleteZps(currentZps));
 
-        // 삭제 버튼 클릭 이벤트
-        deleteButton.addEventListener('click', () => deleteZps(currentZps));
+                // 저장 버튼 클릭 이벤트
+                saveButton.addEventListener('click', saveVocabularyChanges);
 
-        // 저장 버튼 클릭 이벤트
-        saveButton.addEventListener('click', saveVocabularyChanges);
-
-        // 초기 암기장 목록 가져오기
-        fetchZpsList();
-
+                // 초기 암기장 목록 가져오기
+                fetchZpsList();
+            }
+        };
     </script>
 </body>
 

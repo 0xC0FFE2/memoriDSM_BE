@@ -7,7 +7,7 @@ export class Class {
     @PrimaryColumn()
     class_name: string;
 
-    @Column({ default: 8 })
+    @Column({ default: 10 })
     change_amount: number;
 
     @Column({ default: 0 })
