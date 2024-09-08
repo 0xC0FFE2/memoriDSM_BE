@@ -175,7 +175,6 @@
             <h2>반 수정</h2>
             <button class="add-class-button">반 추가하기</button>
             <ul class="class-list">
-                <!-- 반 리스트 동적으로 추가 -->
             </ul>
         </div>
 
@@ -186,9 +185,8 @@
                 <input type="number" class="setting-input" id="word-count" value="8">
             </div>
             <div class="setting-row">
-                <label class="setting-label">ZPS 선택</label>
+                <label class="setting-label">단어장 선택</label>
                 <select id="zps-selector" class="setting-input">
-                    <!-- ZPS 옵션이 여기에 동적으로 추가됩니다. -->
                 </select>
             </div>
             <div class="action-buttons">
@@ -205,7 +203,7 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         };
 
-        const API_BASE_URL = 'http://localhost:4000/api'; // 엔드포인트 기본 URL
+        const API_BASE_URL = 'https://jp-osaka-2399.ncloud.sbs/api'; // 엔드포인트 기본 URL
 
         import { handleSecurityCheck } from './assets/security.js';
 
