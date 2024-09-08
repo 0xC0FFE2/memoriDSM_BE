@@ -206,9 +206,9 @@
 
     <div class="container">
         <div class="welcome">
-            <p class="greeting">오늘도 반가워요, <span>UserName</span>님<br>좋은 하루 되세요!</p>
-            <div class="class-selector" onclick="window.location.href='./'">
-                <div class="navigation">
+            <p class="greeting">오늘도 반가워요, <span id="userName">사용자</span>님<br>좋은 하루 되세요!</p>
+            <div class="class-selector">
+                <div class="navigation" onclick="window.location.href='./'">
                     <span id="classInfo"><span id="classID">1-4</span></span>
                     <div>
                         <span>반을 전환하려면 누르세요</span>
@@ -232,35 +232,36 @@
                     <div class="item">
                         <h2>빠른 바로가기</h2>
                         <div class="quick-actions">
-                            <div class="quick-action" style="background-color: #ffca9f;">넘김<br>설정</div>
+                            <div class="quick-action" style="background-color: #ffca9f;">단어<br>넘기기</div>
                             <div class="quick-action" style="background-color: #9fc5ff;">암기장<br>설정</div>
                             <div class="quick-action" style="background-color: #ff9ffa;">반<br>수정</div>
-                            <div class="quick-action" style="background-color: #ff9f9f;">일반<br>설정</div>
+                            <div class="quick-action" style="background-color: #ff9f9f;">로그<br>아웃</div>
                         </div>
                     </div>
                     <div class="item">
                         <h2>공유 링크</h2>
                         <div style="background-color: #e0e0e0; padding: 10px; border-radius: 5px;">
-                            https://링크링크링크
+                            https://memori-dsm.ncloud.sbs/myvocas
                         </div>
                     </div>
                     <div class="item">
                         <h2>암기장 공개여부</h2>
-                        <div class="button-group">
-                            <button class="button button-primary" style="flex-grow: 1;">공개하기</button>
-                            <button class="button" style="flex-grow: 1;">비공개하기</button>
+                        <div class="button-group" style="gap: 10px;">
+                            <button class="button button-primary" style="flex-grow: 1;"
+                                onclick="alert('아직은 미지원 기능이에요')">공개하기</button>
+                            <button class="button" style="flex-grow: 1;" onclick="alert('아직은 미지원 기능이에요')">비공개하기</button>
                         </div>
                     </div>
                     <div class="item"></div>
-                        <h2>단어 넘기기</h2>
-                        <div class="button-group">
-                            <button class="button button-primary" style="flex-grow: 1;">앞으로 넘기기</button>
-                            <button class="button" style="flex-grow: 1;">비공개하기</button>
-                        </div>
+                    <h2>단어 넘기기</h2>
+                    <div class="button-group" style="gap: 10px;">
+                        <button class="button" style="flex-grow: 1;background-color: #9fc5ff;">앞으로 넘기기</button>
+                        <button class="button" style="flex-grow: 1;background-color: #ffaa9f;">뒤로 넘기기</button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <footer>
         HOSTED BY
@@ -269,17 +270,27 @@
 </body>
 
 </html>
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+<script type="module">
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
 
-<script>function getUrlParams() {
+    // 쿠키에서 JWT를 가져옵니다.
+    const token = getCookie('ACCESS'); // 여기에 쿠키 이름을 넣으세요.
+
+
+    function getUrlParams() {
         var params = {};
         window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) { params[key] = value; });
         return params;
     }
 
     function fetchVocabularyData() {
-        const CLASS = getUrlParams().class; // URL에서 CQS 파라미터 값 가져오기
+        const CLASS = getUrlParams().class;
 
-        // CLASS 값이 없으면 경고 메시지를 표시하고 다른 페이지로 리디렉션
         if (!CLASS) {
             alert('반 정보가 없습니다. 처음부터 시도하여 주십시오.');
             location.href = "./";
@@ -288,7 +299,7 @@
 
         const apiUrl = `http://localhost:4000/api/readVoca/${CLASS}`;
         document.getElementById('classID').innerText = CLASS;
- 
+
         fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
@@ -329,9 +340,31 @@
             .catch(error => {
                 console.error('Error fetching data:', error);
             });
+        if (token) {
+            try {
+                // JWT를 디코딩하여 페이로드를 가져옵니다.
+                const decodedToken = jwt_decode(token);
+                const userEmail = decodedToken.user_email; // 페이로드에서 user_email을 가져옵니다.
+
+                // HTML 요소에 사용자 이메일을 설정합니다.
+                const userNameElement = document.getElementById('userName');
+                if (userNameElement) {
+                    userNameElement.textContent = userEmail; // 사용자 이메일을 요소에 설정합니다.
+                }
+            } catch (error) {
+                console.error('Failed to decode JWT:', error);
+            }
+        } else {
+            console.log('No JWT found in cookies.');
+        }
     }
 
-    // 페이지 로드 시 데이터 가져오기
-    document.addEventListener('DOMContentLoaded', fetchVocabularyData);
+    import { handleSecurityCheck } from './assets/security.js';
 
+    window.onload = async function () {
+        const isAuthenticated = await handleSecurityCheck();
+        if (isAuthenticated) {
+            fetchVocabularyData()
+        }
+    };
 </script>

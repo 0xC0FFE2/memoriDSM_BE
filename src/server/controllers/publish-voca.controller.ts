@@ -17,7 +17,7 @@ export const publishVoca = async (req: Request, res: Response) => {
             relations: ['selected_zps']
         });
 
-        if (!classInfo) {
+        if (!classInfo||!classInfo.is_public) {
             res.status(404).json({ message: "Class not found" });
             return;
         }
