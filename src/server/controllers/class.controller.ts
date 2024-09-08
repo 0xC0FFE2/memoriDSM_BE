@@ -90,3 +90,72 @@ export const deleteClass = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error deleting class', error });
     }
 };
+
+export const incrementLastInvt = async (req: Request, res: Response) => {
+    try {
+        const classItem = await classRepository.findOne({
+            where: { class_name: req.params.name },
+            relations: ['selected_zps', 'selected_zps.vocas']
+        });
+        if (!classItem) {
+            res.status(404).json({ message: "Class not found" });
+            return;
+        }
+
+        const totalWords = classItem.selected_zps.vocas.length;
+        const newLastInvt = classItem.last_invt + classItem.change_amount;
+
+        if (newLastInvt > totalWords) {
+            res.status(400).json({ message: "Cannot increment beyond total words in ZPS" });
+            return;
+        }
+
+        classItem.last_invt = newLastInvt;
+        const updatedClass = await classRepository.save(classItem);
+        res.json(updatedClass);
+    } catch (error) {
+        res.status(500).json({ message: 'Error incrementing last_invt', error });
+    }
+};
+
+export const decrementLastInvt = async (req: Request, res: Response) => {
+    try {
+        const classItem = await classRepository.findOne({
+            where: { class_name: req.params.name }
+        });
+        if (!classItem) {
+            res.status(404).json({ message: "Class not found" });
+            return;
+        }
+
+        const newLastInvt = classItem.last_invt - classItem.change_amount;
+
+        if (newLastInvt < 0) {
+            res.status(400).json({ message: "Cannot decrement below zero" });
+            return;
+        }
+
+        classItem.last_invt = newLastInvt;
+        const updatedClass = await classRepository.save(classItem);
+        res.json(updatedClass);
+    } catch (error) {
+        res.status(500).json({ message: 'Error decrementing last_invt', error });
+    }
+};
+
+export const toggleIsPublic = async (req: Request, res: Response) => {
+    try {
+        const classItem = await classRepository.findOne({
+            where: { class_name: req.params.name }
+        });
+        if (!classItem) {
+            res.status(404).json({ message: "Class not found" });
+            return;
+        }
+        classItem.is_public = classItem.is_public === 1 ? 0 : 1;
+        const updatedClass = await classRepository.save(classItem);
+        res.json(updatedClass);
+    } catch (error) {
+        res.status(500).json({ message: 'Error toggling is_public', error });
+    }
+};
