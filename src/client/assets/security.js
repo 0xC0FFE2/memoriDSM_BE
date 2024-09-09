@@ -10,6 +10,7 @@ export async function handleSecurityCheck() {
             if (refreshToken) {
                 const newAccessToken = await refreshAccessToken(refreshToken);
                 if (newAccessToken) {
+                    location.reload();
                     return true; // 인증 성공
                 } else {
                     redirectToLogin();
