@@ -5,7 +5,6 @@ import zpsRouter from './routes/zps.router';
 import classRouter from './routes/class.router';
 import vocasRouter from './routes/vocas.router';
 import publishRouter from './routes/publish-voca.router'
-import cookieParser from 'cookie-parser';
 
 import cors from 'cors';
 import { json, urlencoded } from 'express';
@@ -13,7 +12,6 @@ import { USER_PROTECT } from './middleware/Auth.middleware';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-app.use(cookieParser());
 app.use(json());
 app.use(cors({
     origin: 'https://memori-dsm.ncloud.sbs', 

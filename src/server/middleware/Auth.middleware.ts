@@ -19,9 +19,9 @@ async function isTokenExpired(token: string): Promise<boolean> {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        return response.status !== 200; // 응답이 200이 아니면 토큰 만료
+        return response.status !== 200;
     } catch (error) {
         console.error('Error validating token:', error);
-        return true; // 요청 실패 시 만료로 판단
+        return true; 
     }
 }
