@@ -212,9 +212,20 @@
         const saveButton = document.querySelector('.save-button');
         const deleteButton = document.querySelector('.delete-button');
         const rightColumn = document.querySelector('.right-column');
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        const token = getCookie('ACCESS');
+
         async function fetchZpsList() {
             try {
-                const response = await fetch(ZPS_ENDPOINT);
+                const response = await fetch(ZPS_ENDPOINT, {
+                    headers: { 'Auth': token }
+                });
                 const zpsList = await response.json();
                 renderZpsList(zpsList);
             } catch (error) {
@@ -222,7 +233,6 @@
             }
         }
 
-        // 암기장 목록 화면에 렌더링
         function renderZpsList(zpsList) {
             vocabularyList.innerHTML = '';
             zpsList.forEach(zps => {
@@ -235,11 +245,14 @@
             });
         }
 
-        // 선택된 암기장의 단어 목록 가져오기
+
+
         async function loadVocabulary(zpsId) {
             currentZps = zpsId;
             try {
-                const response = await fetch(`${VOCAS_ENDPOINT}/${zpsId}`);
+                const response = await fetch(`${VOCAS_ENDPOINT}/${zpsId}`, {
+                    headers: { 'Auth': token }
+                });
                 const vocabularyItems = await response.json();
                 displayVocabulary(vocabularyItems);
             } catch (error) {
@@ -247,7 +260,6 @@
             }
         }
 
-        // 단어 목록 화면에 렌더링
         function displayVocabulary(vocabularyItems) {
             rightColumn.style.display = 'block';
             vocabularyTable.innerHTML = '';
@@ -257,32 +269,32 @@
             });
         }
 
-        // 단어 행 생성
         function createVocabularyRow(item) {
             const row = document.createElement('tr');
             row.innerHTML = `
-        <td contenteditable="true">${item.word_name}</td>
-        <td contenteditable="true">${item.word_meaning}</td>
-        <td>
-            <button class="delete-word">Delete</button>
-        </td>
-    `;
+                <td contenteditable="true">${item.word_name}</td>
+                <td contenteditable="true">${item.word_meaning}</td>
+                <td>
+                    <button class="delete-word">Delete</button>
+                </td>
+            `;
             row.dataset.id = item.voca_id;
             row.querySelector('.delete-word').addEventListener('click', () => deleteVocaRow(item.voca_id));
             return row;
         }
 
-        // 새 단어 행 추가
         function addNewVocaRow() {
             const newItem = { voca_id: Date.now().toString(), word_name: '', word_meaning: '', zps_id: currentZps };
             const row = createVocabularyRow(newItem);
             vocabularyTable.appendChild(row);
         }
 
-        // 단어 삭제 요청
         async function deleteVocaRow(vocaId) {
             try {
-                const response = await fetch(`${VOCAS_ENDPOINT}/${vocaId}`, { method: 'DELETE' });
+                const response = await fetch(`${VOCAS_ENDPOINT}/${vocaId}`, {
+                    method: 'DELETE',
+                    headers: { 'Auth': token }
+                });
                 if (response.ok) {
                     document.querySelector(`tr[data-id="${vocaId}"]`).remove();
                 } else {
@@ -293,18 +305,20 @@
             }
         }
 
-        // 암기장 삭제 요청
         async function deleteZps(zpsId) {
-            userConfirm = confirm('정말로 단어장을 삭제하시겠습니까?')
-            if (!userConfirm || userConfirm == NaN) {
-                return false;
+            const userConfirm = confirm('정말로 단어장을 삭제하시겠습니까?');
+            if (!userConfirm) {
+                return;
             }
             try {
-                const response = await fetch(`${ZPS_ENDPOINT}/${zpsId}`, { method: 'DELETE' });
+                const response = await fetch(`${ZPS_ENDPOINT}/${zpsId}`, {
+                    method: 'DELETE',
+                    headers: { 'Auth': token }
+                });
                 if (response.ok) {
                     document.querySelector(`.vocabulary-item[data-id="${zpsId}"]`).remove();
                 } else {
-                    alert('암기장을 삭제할 수 없습니다. 이 암기장을 사용하는 반(Class)가 있을 수 있습니다.')
+                    alert('암기장을 삭제할 수 없습니다. 이 암기장을 사용하는 반(Class)가 있을 수 있습니다.');
                     console.error('암기장 삭제에 실패했습니다.');
                 }
             } catch (error) {
@@ -332,12 +346,11 @@
                             }
                         }
 
-                        // Send new items to the server
                         for (const item of newItems) {
                             try {
                                 const response = await fetch(VOCAS_ENDPOINT, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 'Content-Type': 'application/json', 'Auth': token },
                                     body: JSON.stringify(item),
                                 });
                                 if (!response.ok) {
@@ -365,27 +378,6 @@
             location.reload();
         }
 
-
-        // 암기장 추가 요청
-        addZpsButton.addEventListener('click', async () => {
-            const zpsName = prompt('새 암기장의 이름을 입력하세요:');
-            if (zpsName) {
-                try {
-                    const response = await fetch(ZPS_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ zps_name: zpsName })
-                    });
-                    const newZps = await response.json();
-                    renderZpsList([newZps]);
-                } catch (error) {
-                    console.error('새 암기장 생성 오류:', error);
-                }
-            }
-            location.reload();
-        });// 단어 목록 저장 요청
-
-
         async function saveVocabularyChanges() {
             if (!currentZps) {
                 alert('암기장이 선택되지 않았습니다.');
@@ -393,7 +385,9 @@
             }
 
             try {
-                const response = await fetch(`${VOCAS_ENDPOINT}/${currentZps}`);
+                const response = await fetch(`${VOCAS_ENDPOINT}/${currentZps}`, {
+                    headers: { 'Auth': token }
+                });
                 const serverVocabularyItems = await response.json();
                 const rows = Array.from(vocabularyTable.querySelectorAll('tr'));
                 const userVocabularyItems = rows.map((row, index) => ({
@@ -401,7 +395,7 @@
                     word_name: row.cells[0].textContent.trim(),
                     word_meaning: row.cells[1].textContent.trim(),
                     zps_id: currentZps,
-                    sequence_number: index + 1 // Assign sequence number based on order
+                    sequence_number: index + 1
                 }));
 
                 for (const userItem of userVocabularyItems) {
@@ -415,14 +409,14 @@
                         ) {
                             await fetch(`${VOCAS_ENDPOINT}/${userItem.voca_id}`, {
                                 method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json', 'Auth': token },
                                 body: JSON.stringify(userItem),
                             });
                         }
                     } else {
                         await fetch(VOCAS_ENDPOINT, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'Auth': token },
                             body: JSON.stringify(userItem),
                         });
                     }
@@ -436,28 +430,53 @@
             }
         }
 
+async function addNewZps() {
+    const zpsName = prompt('새 암기장의 이름을 입력하세요:');
+    if (zpsName) {
+        try {
+            const response = await fetch(ZPS_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Auth': token
+                },
+                body: JSON.stringify({ zps_name: zpsName })
+            });
+            if (response.ok) {
+                const newZps = await response.json();
+                const li = document.createElement('li');
+                li.textContent = newZps.zps_name;
+                li.classList.add('vocabulary-item');
+                li.dataset.id = newZps.zps_id;
+                li.addEventListener('click', () => loadVocabulary(newZps.zps_id));
+                vocabularyList.appendChild(li);
+                alert('새 암기장이 추가되었습니다.');
+            } else {
+                throw new Error('서버 응답 오류');
+            }
+        } catch (error) {
+            console.error('암기장 추가 오류:', error);
+            alert('암기장 추가 중 오류가 발생했습니다.');
+        }
+    }
+}
+
+addZpsButton.addEventListener('click', addNewZps);
+
         import { handleSecurityCheck } from './assets/security.js';
 
         window.onload = async function () {
             const isAuthenticated = await handleSecurityCheck();
             if (isAuthenticated) {
-                // 붙여넣기 버튼 클릭 이벤트
                 pasteDataButton.addEventListener('click', pasteData);
-
-                // 새 단어 추가 버튼 클릭 이벤트
                 addVocaRowButton.addEventListener('click', addNewVocaRow);
-
-                // 삭제 버튼 클릭 이벤트
                 deleteButton.addEventListener('click', () => deleteZps(currentZps));
-
-                // 저장 버튼 클릭 이벤트
                 saveButton.addEventListener('click', saveVocabularyChanges);
-
-                // 초기 암기장 목록 가져오기
                 fetchZpsList();
             }
         };
     </script>
+
 </body>
 
 </html>

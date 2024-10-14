@@ -175,7 +175,6 @@
             <h2>반 수정</h2>
             <button class="add-class-button">반 추가하기</button>
             <ul class="class-list">
-                <!-- 반 리스트 동적으로 추가 -->
             </ul>
         </div>
 
@@ -186,9 +185,8 @@
                 <input type="number" class="setting-input" id="word-count" value="8">
             </div>
             <div class="setting-row">
-                <label class="setting-label">ZPS 선택</label>
+                <label class="setting-label">단어장 선택</label>
                 <select id="zps-selector" class="setting-input">
-                    <!-- ZPS 옵션이 여기에 동적으로 추가됩니다. -->
                 </select>
             </div>
             <div class="action-buttons">
@@ -199,6 +197,12 @@
     </div>
 
     <script type="module">
+        const getCookie = (name) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        };
+
         const API_BASE_URL = 'http://localhost:4000/api'; // 엔드포인트 기본 URL
 
         import { handleSecurityCheck } from './assets/security.js';
@@ -214,14 +218,19 @@
         // ZPS 목록 불러오기
         async function loadZPSOptions() {
             try {
-                const response = await fetch(`${API_BASE_URL}/zps`);
+                const response = await fetch(`${API_BASE_URL}/zps`, {
+                    method: 'GET',
+                    headers: {
+                        'Auth': getCookie('ACCESS')
+                    }
+                });
                 const zpsList = await response.json();
                 const zpsSelector = document.getElementById('zps-selector');
 
                 zpsList.forEach(zps => {
                     const option = document.createElement('option');
                     option.value = zps.zps_id;
-                    option.textContent = zps.zps_name; // ZPS 엔티티의 이름을 표시
+                    option.textContent = zps.zps_name;
                     zpsSelector.appendChild(option);
                 });
             } catch (error) {
@@ -232,7 +241,12 @@
         // 반 목록 불러오기
         async function loadClasses() {
             try {
-                const response = await fetch(`${API_BASE_URL}/classes`);
+                const response = await fetch(`${API_BASE_URL}/classes`, {
+                    method: 'GET',
+                    headers: {
+                        'Auth': getCookie('ACCESS')
+                    }
+                });
                 const classes = await response.json();
                 const classList = document.querySelector('.class-list');
                 classList.innerHTML = ''; // 기존 항목 삭제
@@ -250,7 +264,6 @@
         }
 
         function selectClass(classItem) {
-            // 현재 선택한 반의 설정을 UI에 반영
             document.querySelector('.settings-title').textContent = `${classItem.class_name} 설정`;
             document.getElementById('word-count').value = classItem.change_amount || 8;
             document.getElementById('zps-selector').value = classItem.selected_zps?.zps_id || '';
@@ -266,7 +279,8 @@
                 await fetch(`${API_BASE_URL}/classes/${className}`, {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Auth': getCookie('ACCESS')
                     },
                     body: JSON.stringify({
                         change_amount: wordCount,
@@ -285,14 +299,18 @@
             const className = document.querySelector('.settings-title').textContent.replace(' 설정', '');
 
             try {
-                await fetch(`${API_BASE_URL}/classes/${className}`, { method: 'DELETE' });
+                await fetch(`${API_BASE_URL}/classes/${className}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Auth': getCookie('ACCESS')
+                    }
+                });
                 alert('반이 삭제되었습니다.');
                 window.location.href = './start.html'
             } catch (error) {
                 console.error('Error deleting class:', error);
                 alert('반 삭제에 실패했습니다.');
             }
-            location.reload();
         });
 
         // 반 추가 기능
@@ -304,12 +322,13 @@
                 const response = await fetch(`${API_BASE_URL}/classes`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Auth': getCookie('ACCESS')
                     },
                     body: JSON.stringify({
                         class_name: newClassName,
-                        change_amount: 8, // 기본값
-                        selected_zps_id: document.getElementById('zps-selector').value // 기본 ZPS
+                        change_amount: 8,
+                        selected_zps_id: document.getElementById('zps-selector').value
                     })
                 });
 
@@ -326,6 +345,7 @@
             }
         });
     </script>
+
 </body>
 
 </html>
